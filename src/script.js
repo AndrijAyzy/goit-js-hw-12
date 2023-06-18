@@ -1,4 +1,5 @@
 import {fetchPhoto} from './script-api.js'
+import Notiflix from 'notiflix';
 
 const search = document.querySelector('.search');
 const form = document.querySelector('#search-form');
@@ -9,6 +10,7 @@ moreBtn.style.display = 'none';
 
 const key = "31nGg2fLhw7TyDw22bDRugWNv9R9hVyGKv";
 
+let page = 1;
 
 form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -17,27 +19,44 @@ form.addEventListener('submit', (event) => {
         return;
     }
     gallery.innerHTML = '';
-    fetchPhoto(search.value.trim(), false)
+    page = 1;
+    fetchPhoto(search.value.trim(), page)
         .then(data => {
             if (data.hits.length === 0) {
-                console.log('Sorry, there are no images matching your search query. Please try again.')
+                Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again.')
             } else {
-                console.log(data.totalHits);
-                creator(data.hits);
+                Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
+                if (data.totalHits <= page * 40) {
+                    creator(data.hits);
+                    Notiflix.Notify.failure("We're sorry, but you've reached the end of search results.");
+                    moreBtn.style.display = 'none';
+                } else {
+                    page++;
+                    creator(data.hits);
+                    moreBtn.style.display = 'block';
+                }
             }
         })
-        .catch(error => console.log(error));
-    moreBtn.style.display = 'block';
+        .catch(error => Notiflix.Notify.failure(error));
 });
 
-moreBtn.addEventListener('click', (event) => {
+moreBtn.addEventListener('click', () => {
     moreBtn.style.display = 'none';
 
-    fetchPhoto(search.value.trim(), true)
-        .then(data => creator(data.hits))
-        .catch(error => console.log(error));
+    fetchPhoto(search.value.trim(), page)
+        .then(data => {
+            if (data.totalHits <= page * 40) {
+                creator(data.hits);
+                Notiflix.Notify.failure("We're sorry, but you've reached the end of search results.");
+                moreBtn.style.display = 'none';
+            } else {
+                page++;
+                creator(data.hits);
+                moreBtn.style.display = 'block';
+            }
+        })
+        .catch(error => Notiflix.Notify.failure(error));
 
-    moreBtn.style.display = 'block';
 })
 
 function creator(array) {
@@ -67,5 +86,3 @@ function creator(array) {
         `)
     })
 }
-
-// переделать поиск под AXIOS
