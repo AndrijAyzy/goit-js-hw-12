@@ -18,16 +18,24 @@ form.addEventListener('submit', (event) => {
     }
     gallery.innerHTML = '';
     fetchPhoto(search.value.trim(), false)
-        .then(data => creator(data.hits))
-        .catch(error => console.log("Sorry, there are no images matching your search query. Please try again.", error));
+        .then(data => {
+            if (data.hits.length === 0) {
+                console.log('Sorry, there are no images matching your search query. Please try again.')
+            } else {
+                console.log(data.totalHits);
+                creator(data.hits);
+            }
+        })
+        .catch(error => console.log(error));
     moreBtn.style.display = 'block';
 });
 
 moreBtn.addEventListener('click', (event) => {
     moreBtn.style.display = 'none';
 
-    fetchPhoto(search.value.trim(), true);
-    creator(data.hits);
+    fetchPhoto(search.value.trim(), true)
+        .then(data => creator(data.hits))
+        .catch(error => console.log(error));
 
     moreBtn.style.display = 'block';
 })
